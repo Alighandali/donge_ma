@@ -1,5 +1,5 @@
 # donge_ma
-Calculate the trip fare fairly for each attendee
+Calculate the trip fare fairly for each attendee using **Streamlit** app framework
 
 "Dong" is a Farsi word for someone's share of a payment
 
