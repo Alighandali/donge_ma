@@ -13,4 +13,4 @@ Calculate the trip fare fairly for each attendee
 
 **The last step** is clicking on `Calculate` button\
 **That's it!**\
-You can see the transactions to be done in the `Transactions` columns\
+You can see the transactions to be done in the `Transactions` columns
