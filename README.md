@@ -14,3 +14,10 @@ Calculate the trip fare fairly for each attendee using **Streamlit** app framewo
 **The last step** is clicking on `Calculate` button\
 **That's it!**\
 You can see the transactions to be done in the `Transactions` columns
+
+
+<img
+  src="img/app_preview.png"
+  alt="App Preview"
+  title="App Preview in Streamlit"
+  style="display: block; margin: auto; max-width: 70%">

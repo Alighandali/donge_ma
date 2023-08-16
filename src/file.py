@@ -2,6 +2,8 @@ import streamlit as st
 import copy
 
 st.title("This is *Dong* Time :bar_chart:")
+st.caption("'**Dong**' is a Farsi word for someone's share of a payment")
+
 
 # Create objets in Streamlit cache
 if 'attendee_keys' not in st.session_state:
