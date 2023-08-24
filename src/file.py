@@ -134,7 +134,7 @@ def transactions(x_list):
         y_list[0][0] += transaction
         y_list[-1][0] -= transaction
         report.append(
-            f":red[**{y_list[0][1].title()}**] **{transaction}**\
+            f":red[**{y_list[0][1].title()}**] **{transaction:.2f}**\
                   :point_right: :green[**{y_list[-1][1].title()}**]")
         if abs(y_list[0][0]) < abs(y_list[-1][0]):
             y_list.pop(0)
@@ -164,7 +164,8 @@ with col3:
                         color = 'red'
                         emoji = ':thumbsdown:'
                     st.markdown(f"**{person.name.title():<10}:**\
-                                :{color}[**{person.must_receive:,}** {emoji}]")
+                                :{color}[**{person.must_receive:,.2f}**\
+                                      {emoji}]")
             with col2:
                 st.subheader("Transactions:")
                 total_list = []
