@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <title>stlite app</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.65.0/build/stlite.css"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.65.0/build/stlite.js"></script>
+    <script>
+stlite.mount(
+  {
+    requirements: [],
+    entrypoint: "streamlit_app.py",
+    files: {
+"streamlit_app.py": `import streamlit as st
+import copy
+
+st.title("This is *Dong* Time :bar_chart:")
+st.caption("'**Dong**' is a Farsi word for someone's share of a payment")
+
+
+# Create objets in Streamlit cache
+if 'attendee_keys' not in st.session_state:
+    st.session_state.attendee_keys = []
+if 'attendee_num' not in st.session_state:
+    st.session_state.attendee_num = 0
+if 'pay_keys' not in st.session_state:
+    st.session_state.pay_keys = []
+if 'pay_num' not in st.session_state:
+    st.session_state.pay_num = 0
+if 'attendee_objs' not in st.session_state:
+    st.session_state.attendee_objs = []
+if 'pay_objs' not in st.session_state:
+    st.session_state.pay_objs = []
+if 'calculated' not in st.session_state:
+    st.session_state.calculated = 0
+
+
+class Attendee:
+    '''
+    create object for an attendee
+    '''
+    def __init__(self, name):
+        self.name = name
+        self.must_receive = 0
+
+
+pays_list = []
+
+
+class Pay:
+    '''
+    create object for a payment
+    '''
+    def __init__(self, name, cost, buyer, users=[]):
+        self.name = name
+        self.cost = cost
+        self.buyer = buyer
+        self.users = users
+        pays_list.append(self)
+
+    def calculate(self):
+        '''
+        calculate share for each attendee
+        '''
+        res = {}
+        self.list_users = self.users
+        self.each_dong = self.cost / len(self.list_users)
+        for person in self.list_users:
+            person.must_receive -= self.each_dong
+            res[person.name] = - self.each_dong
+        self.buyer.must_receive += self.cost
+        res[self.buyer.name] = res.get(self.buyer.name, 0) + self.cost
+        self.each_dong = self.cost = 0
+        return res
+
+
+# receive and show attendees on sidebar
+with st.sidebar:
+    attendee_names = []
+    if st.button("Add New Attendee :busts_in_silhouette:"):
+        st.session_state.attendee_keys.append(st.session_state.attendee_num)
+        person = Attendee(st.session_state.attendee_num)
+        st.session_state.attendee_objs.append(person)
+        st.session_state.attendee_num += 1
+    for i in st.session_state.attendee_keys:
+        attendee_name = st.text_input(
+            f"{i + 1}th Attendee :bust_in_silhouette:",
+            key=f"t{i}")
+        st.session_state.attendee_objs[i].name = attendee_name
+        attendee_names.append(attendee_name)
+
+# receive and show pays
+pay_names = []
+if st.button("Add New Pay :moneybag:"):
+    st.session_state.pay_keys.append(st.session_state.pay_num)
+    pay = Pay(name=0, cost=0, buyer=0, users=[])
+    st.session_state.pay_objs.append(pay)
+    st.session_state.pay_num += 1
+for i in st.session_state.pay_keys:
+    with st.expander(f"**{i + 1}th Pay Detail** :memo:"):
+        col11, col12, col13 = st.columns(3)
+        with col11:
+            pay_name = st.text_input(f"**{i + 1}th Pay** :heavy_dollar_sign:",
+                                     key=f"p{i}", placeholder="Dinner")
+        with col12:
+            pay_cost = st.number_input(f"**{i + 1}th Cost** :credit_card:",
+                                       key=f"c{i}", step=1000)
+        with col13:
+            buyer_name = st.selectbox(
+                f"**{i + 1}th Buyer** :money_with_wings:",
+                options=attendee_names, key=f"b{i}")
+            for j, _ in enumerate(st.session_state.attendee_objs):
+                if buyer_name == st.session_state.attendee_objs[j].name:
+                    buyer_name = st.session_state.attendee_objs[j]
+        users = st.multiselect("**Who Use It?** :yum:",
+                               attendee_names, key=f"u{i}")
+        for k, _ in enumerate(users):
+            for n, _ in enumerate(st.session_state.attendee_objs):
+                if users[k] == st.session_state.attendee_objs[n].name:
+                    users[k] = st.session_state.attendee_objs[n]
+
+        st.session_state.pay_objs[i].name = pay_name
+        st.session_state.pay_objs[i].cost = pay_cost
+        st.session_state.pay_objs[i].buyer = buyer_name
+        st.session_state.pay_objs[i].users = users
+        pay_names.append((pay_name, pay_cost))
+
+
+def calculate_all():
+    '''
+    aggregate all pays and calculate the final shares
+    '''
+    if st.session_state.calculated == 0 or st.session_state.attendee_objs:
+        for pay in st.session_state.pay_objs:
+            pay.calculate()
+
+
+def transactions(x_list):
+    '''
+    show all money transactions to be done
+    '''
+    y_list = copy.deepcopy(x_list)
+    y_list.sort(key=lambda y_list: y_list[0])
+    report = []
+    while len(y_list) > 1:
+        transaction = min(abs(y_list[0][0]), abs(y_list[-1][0]))
+        y_list[0][0] += transaction
+        y_list[-1][0] -= transaction
+        report.append(
+            f":red[**{y_list[0][1].title()}**] **{transaction:.2f}**\\
+                  :point_right: :green[**{y_list[-1][1].title()}**]")
+        if abs(y_list[0][0]) < abs(y_list[-1][0]):
+            y_list.pop(0)
+        else:
+            y_list.pop(-1)
+    return report
+
+
+# show the final result
+st.divider()
+col1, col2, col3 = st.columns(3)
+with col3:
+    if st.button("Calculate :abacus:", type="primary"):
+        if len(st.session_state.attendee_objs) != 0:
+            for person in st.session_state.attendee_objs:
+                person.must_receive = 0
+            calculate_all()
+            with col1:
+                st.subheader("Each attendee:")
+                total_res = {}
+                for person in st.session_state.attendee_objs:
+                    total_res[person.name] = person.must_receive
+                    if person.must_receive > 0:
+                        color = 'green'
+                        emoji = ':thumbsup:'
+                    else:
+                        color = 'red'
+                        emoji = ':thumbsdown:'
+                    st.markdown(f"**{person.name.title():<10}:**\\
+                                :{color}[**{person.must_receive:,.2f}**\\
+                                      {emoji}]")
+            with col2:
+                st.subheader("Transactions:")
+                total_list = []
+                for i, person in enumerate(st.session_state.attendee_objs):
+                    total_list.append([person.must_receive, person.name])
+                transactions_res = transactions(total_list)
+                for trans in transactions_res:
+                    st.markdown(trans)`,
+"data/logo.png": Ut("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"),
+"pages/🎈_subpage.py": `import streamlit as st
+
+st.title("Sub page")
+
+st.markdown("""
+_Stlite_ supports **Multi Page Apps (MPA)**, of course!
+
+Create \`pages/*.py\` like this file to add new pages.
+
+If you are new to MPA, read the official tutorial about it [🔗 here](https://docs.streamlit.io/library/get-started/multipage-apps)
+""")
+`,
+
+},
+  },
+  document.getElementById("root")
+)
+
+function Ut(e){const t=window.atob(e),n=t.length,r=new Uint8Array(n);for(let a=0;a<n;a++)r[a]=t.charCodeAt(a);return r}
+    </script>
+  </body>
+  <!-- Generated from stlite sharing (https://edit.share.stlite.net/), and the source version is 7a368f1e5666c01a42d6c59986b3bfcc5f3e8689 -->
+</html>
+For more information, read this document
+
+Desktop app
+Read this document
