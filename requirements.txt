@@ -1,2 +1,2 @@
-# python==3.8.17
+python==3.8.17
 streamlit==1.25.0
